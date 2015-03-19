@@ -1,2 +1,5 @@
----
-# handlers file for debian-upgrade
+- name: done
+  debug: msg="Upgrade done, will reboot in 1 minute !"
+
+- name: reboot
+  command: shutdown -r -F +1

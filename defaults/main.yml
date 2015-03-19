@@ -1,2 +1,3 @@
----
-# defaults file for debian-upgrade
+upgrade_from_debian: squeeze
+upgrade_to_debian: wheezy
+pkgs_to_install_after_upgrade:

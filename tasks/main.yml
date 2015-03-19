@@ -1,2 +1,115 @@
----
-# tasks file for debian-upgrade
+- name: Check OS
+  fail: msg="Weird!! Are you crazy ??"
+  when: ansible_os_family != "Debian"
+  tags: checks
+
+- name: Check Debian version
+  fail: msg="Can upgrade from {{ upgrade_from_debian }} only."
+  when: ansible_lsb.codename != "{{ upgrade_from_debian }}"
+  tags: checks
+
+- name: Register current major release
+  set_fact: current_debian_release="{{ ansible_lsb.major_release }}"
+  
+
+- name: APT | dist-upgrade current release
+  apt: update_cache=yes upgrade=full force=yes
+  tags: checks
+
+
+- include: squeeze_pre_upgrade.yml
+  when: ansible_lsb.major_release|int == 6
+
+
+- name: APT | list packages to purge
+  shell: dpkg -l | grep ^rc | awk '{print $2}'
+  register: pkg_to_purge
+  changed_when: False
+
+- name: APT | purge uninstalled packages
+  apt: name={{ item }} state=absent purge=yes
+  with_items: pkg_to_purge.stdout_lines
+  when: pkg_to_purge.stdout != ""
+
+- name: UPGRADE | patch sources.list
+  shell: sed -i '/debian-volatile/ d; s/debian-backports/debian/g; s/php53/dotdeb/g; s/{{ upgrade_from_debian }}/{{ upgrade_to_debian }}/g; s/www.backports.org/http.debian.net/; \_http.debian.net/debian wheezy-lts_ d;' /etc/apt/sources.list /etc/apt/sources.list.d/*.list
+  changed_when: False
+ 
+- name: UPGRADE | remove specific sources.list
+  shell: rm -vf /etc/apt/sources.list.d/*{{ upgrade_from_debian }}*.list
+  changed_when: False
+
+
+- name: APT | update
+  apt: update_cache=yes
+
+- name: APT | upgrade apt and dpkg
+  apt: name={{ item }} state=latest
+  with_items:
+  - apt
+  - dpkg
+
+- include: squeeze_mid_upgrade.yml
+  when: ansible_lsb.major_release|int == 6
+
+- name: APT | full upgrade
+  apt: upgrade=full
+  notify: [done, reboot]
+
+- name: Check if NFS is used
+  shell: grep -v "^#" /etc/fstab | grep nfs
+  register: check_nfs
+  changed_when: False
+
+- name: APT | install nfs-common
+  apt: name=nfs-common state=present
+  when: check_nfs.rc == 0
+
+
+- name: PURGE | old kernels
+  shell: dpkg -l | grep -F linux-image-2.6 | grep -vF $( uname -r ) | awk '{print $2}'
+  register: old_kernels
+  changed_when: False
+
+- name: APT | purge old kernels
+  apt: name={{ item }} state=absent purge=yes
+  with_items: old_kernels.stdout_lines
+  when: old_kernels.stdout != ""
+  tags: purge
+
+
+- include: squeeze_post_upgrade.yml
+  when: ansible_lsb.major_release|int == 6
+
+
+- name: PEAR | check presence
+  command: which pear
+  register: pear_presence
+  changed_when: False
+  failed_when: False
+
+- name: PEAR | update
+  command: pear {{ item }}
+  with_items:
+  - update-channels
+  - upgrade
+  when: pear_presence.rc == 0
+
+- name: APT | Install packages post-uprade
+  apt: name={{ item }} state=latest
+  with_items: pkgs_to_install_after_upgrade
+  tags: custom
+
+# autoremove is available from squeeze
+- name: APT | autoremove
+  command: apt-get -y autoremove
+  changed_when: False
+  when: ansible_lsb.major_release|int >= 6
+  tags: purge
+
+- name: APT | clean
+  command: apt-get clean
+  changed_when: False
+
+
+
