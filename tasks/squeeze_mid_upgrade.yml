@@ -1,0 +1,5 @@
+- name: APT | reinstall conflictual packages
+  apt: pkg={{ item }} state=latest
+  with_items:
+  - mysql-client
+  when: mysql_client_present.changed

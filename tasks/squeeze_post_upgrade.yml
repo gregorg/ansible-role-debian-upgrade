@@ -1,0 +1,4 @@
+- name: UDEV | reinstall ...
+  command: apt-get -y --force-yes install --reinstall -o dpkg_options="--force-confmiss,force-confdef,force-confold" udev
+  changed_when: False
+

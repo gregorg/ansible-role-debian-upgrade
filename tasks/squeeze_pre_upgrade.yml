@@ -1,0 +1,12 @@
+- name: APT | remove deprecated packages (squeeze)
+  apt: pkg={{ item }} state=absent
+  with_items:
+  - libdevmapper1.02
+
+- name: APT | remove conflictual packages (squeeze)
+  apt: name={{ item }} state=absent
+  with_items:
+  - mysql-client-core-5.5
+  - mysql-client-5.5
+  register: mysql_client_present
+
