@@ -19,6 +19,19 @@ Role Variables
     * Default: empty
 
 
+Role Tags
+---------
+
+You can use tags to skip some hard tasks :
+* `reboot`: the most important, you can skip reboot at the end of a successfull upgrade
+* `checks`: if for some reason this role failed in middle upgrade, you can skip this tags to disable release checking
+* `purge`: to skip packages purge (old kernels and `apt-get autoremove`
+* `custom`: to skip installation of custom debian packages
+
+```
+ansible-playbook playbook.yml --skip-tags checks,reboot
+```
+
 Example Playbook
 ----------------
 

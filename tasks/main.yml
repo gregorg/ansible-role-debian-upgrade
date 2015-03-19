@@ -17,6 +17,11 @@
   tags: checks
 
 
+- name: Remove flag
+  file: path={{ upgrade_reboot_flag_file }} state=absent
+  changed_when: False
+
+
 - include: squeeze_pre_upgrade.yml
   when: ansible_lsb.major_release|int == 6
 
@@ -54,7 +59,7 @@
 
 - name: APT | full upgrade
   apt: upgrade=full
-  notify: [done, reboot]
+  notify: reboot
 
 - name: Check if NFS is used
   shell: grep -v "^#" /etc/fstab | grep nfs
@@ -96,8 +101,9 @@
   when: pear_presence.rc == 0
 
 - name: APT | Install packages post-uprade
-  apt: name={{ item }} state=latest
+  apt: name={{ item }} state=latest force=yes
   with_items: pkgs_to_install_after_upgrade
+  notify: reboot
   tags: custom
 
 # autoremove is available from squeeze
@@ -111,5 +117,10 @@
   command: apt-get clean
   changed_when: False
 
+
+# Ansible does not support tags in handlers, so I use this trick :
+- name: Enable reboot
+  copy: content="" dest={{ upgrade_reboot_flag_file }}
+  tags: reboot
 
 

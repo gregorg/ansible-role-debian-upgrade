@@ -1,0 +1,1 @@
+upgrade_reboot_flag_file: /tmp/ansible-debian-upgrade.flag
