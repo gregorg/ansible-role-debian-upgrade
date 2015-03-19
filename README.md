@@ -8,6 +8,18 @@ Only upgrade from Squeeze to Wheezy is supported and tested.
 Visit [Ansible Galaxy](https://galaxy.ansible.com/list#/roles/3177) for usage.
 
 
+Warnings
+--------
+
+By default, the server is reboot after a successfull dist-upgrade, but you can disable this behavior.
+
+I highly recommend to limit playbook execution to one server :
+
+```
+ansible-playbook -l ~myserver playbook.yml
+```
+
+
 Role Variables
 --------------
 
