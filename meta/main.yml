@@ -8,6 +8,7 @@ galaxy_info:
   - name: Debian
     versions:
     - squeeze
+    - wheezy
   categories:
   - packaging
   - system
